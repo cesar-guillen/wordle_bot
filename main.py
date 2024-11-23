@@ -9,15 +9,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from bot_id import BOT_ID
-
 from discord.ext import commands
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
+
 #CHANNEL_ID = 944387424426029056
 CHANNEL_ID = 1303707032842403854
 WORDLE_0 = "19/6/2021"
 CONNECTIONS_0 = "11/6/2023"
+SEASON_DURATON = 28
+
 #database
 database = sqlite3.connect('bot_db')
 cursor = database.cursor
@@ -137,22 +140,26 @@ async def movie(ctx):
 @bot.command()
 async def rank(ctx):
     game = ((ctx.message.content.split())[1])[0].lower()
+    try:
+        days = int((ctx.message.content.split())[2])
+    except:
+        days = 2000
     if game == "w":
-        wordle_leaderboard_list = get_wordle_leaderboard()
+        wordle_leaderboard_list = get_wordle_leaderboard(days)
         leaderboard_message = "Wordle Leaderboard:\n"
         for idx, (user, score) in enumerate(wordle_leaderboard_list, 1):
             leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
         await ctx.send(leaderboard_message)
         return
     if game == "c": 
-        connections_leaderboard_list = get_connections_leaderboard()
+        connections_leaderboard_list = get_connections_leaderboard(days)
         leaderboard_message = "Connections Leaderboard:\n"
         for idx, (user, score) in enumerate(connections_leaderboard_list, 1):
             leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
         await ctx.send(leaderboard_message)
         return
     if game == "a": 
-        overall_leaderboard_list = get_all_leaderboard()
+        overall_leaderboard_list = get_all_leaderboard(days)
         leaderboard_message = "Overall Leaderboard:\n"
         for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
             leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
@@ -296,29 +303,29 @@ def calculate_wordle_distribution(username_to_check):
     return formatted_distribution
 
     
-def get_wordle_leaderboard():
+def get_wordle_leaderboard(days):
     users_list = get_all_users()
     wordle_leaderboard_list = []
     for users in users_list:
         user = users[0]
-        user_wordle_average = calculate_average_wordle_guesses(user)
+        user_wordle_average = calculate_average_wordle_guesses(user,days)
         wordle_leaderboard_list.append((user,user_wordle_average))
     wordle_leaderboard_list.sort(key=lambda x: x[1])
     return wordle_leaderboard_list
 
-def get_connections_leaderboard():
+def get_connections_leaderboard(days):
     users_list = get_all_users()
     connections_leaderboard_list = []
     for users in users_list:
         user = users[0]
-        user_connections_average = calculate_average_connections_guesses(user)
+        user_connections_average = calculate_average_connections_guesses(user,days)
         connections_leaderboard_list.append((user,user_connections_average))
     connections_leaderboard_list.sort(key=lambda x: x[1], reverse=True)
     return connections_leaderboard_list
 
-def get_all_leaderboard():
-    connections_leaderboard_list = get_connections_leaderboard()
-    wordle_leaderboard_list = get_wordle_leaderboard()
+def get_all_leaderboard(days):
+    connections_leaderboard_list = get_connections_leaderboard(days)
+    wordle_leaderboard_list = get_wordle_leaderboard(days)
     overall_leaderboard_list = []
     for c_user in connections_leaderboard_list:
         for w_user in wordle_leaderboard_list:
@@ -343,29 +350,47 @@ def put_wordle(username, wordle_id, correct):
                    (username, wordle_id, correct))
     database.commit()
     
-def calculate_average_wordle_guesses(username_to_check):
-    query = database.execute('SELECT Guesses FROM WordleScores WHERE UserID = ?', (username_to_check,))
+def day_difference(first_date, second_date):
+    day_difference = (first_date - second_date).days
+    return day_difference
+
+def calculate_start_id(days):
+    WORDLE_0 = "19/6/2021"
+    start_date_w = datetime.strptime(WORDLE_0, "%d/%m/%Y")
+    start_date_c = datetime.strptime(CONNECTIONS_0, "%d/%m/%Y")
+    today_date = datetime.today()
+    start_id_w = day_difference(today_date, start_date_w) - days
+    start_id_c = day_difference(today_date, start_date_c) - days
+    return [start_id_w, start_id_c]
+
+def calculate_average_wordle_guesses(username_to_check, days):
+    query = database.execute('SELECT Guesses FROM WordleScores WHERE UserID = ? AND WordleID > ?', (username_to_check,calculate_start_id(days)[0]))
     guesses_db = query.fetchall() 
     guesses = []
     for row in guesses_db:
         guess_str = row[0]
         guess = int(guess_str.split('/')[0])
         guesses.append(guess)
-
     total_guesses = sum(guesses) 
-    average_guesses = total_guesses / len(guesses)
+    try:
+        average_guesses = total_guesses / len(guesses)
+    except:
+        average_guesses = 0
 
     return average_guesses
 
-def calculate_average_connections_guesses(username_to_check):
-    query = database.execute('SELECT Score FROM ConnectionsScores WHERE UserID = ?', (username_to_check,))
+def calculate_average_connections_guesses(username_to_check, days):
+    query = database.execute('SELECT Score FROM ConnectionsScores WHERE UserID = ? AND ConnectionsID > ?', (username_to_check,calculate_start_id(days)[1]))
     scores_db = query.fetchall() 
     scores = []
     for row in scores_db:
         scores.append(row[0])
  
     total_score = sum(scores) 
-    averege_score = total_score / len(scores)
+    try:
+        averege_score = total_score / len(scores)
+    except:
+        averege_score = 0
     return averege_score
 
 
