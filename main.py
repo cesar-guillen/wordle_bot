@@ -2,14 +2,18 @@ import discord
 import re
 import sqlite3
 import math 
+import time
 from datetime import datetime, timedelta
 import csv 
+import schedule
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import asyncio 
 from bot_id import BOT_ID
 from discord.ext import commands
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -20,6 +24,7 @@ CHANNEL_ID = 1303707032842403854
 WORDLE_0 = "19/6/2021"
 CONNECTIONS_0 = "11/6/2023"
 SEASON_DURATON = 28
+current_season_day = 27
 
 #database
 database = sqlite3.connect('bot_db')
@@ -168,7 +173,16 @@ async def rank(ctx):
     else:
         await ctx.send(f"{game} is not a command. Please specify a leaderboard: Wordle (w), Connections (c), or All (a).")
 
-            
+@bot.command()
+async def season(ctx):
+    global current_season_day
+    overall_leaderboard_list = get_all_leaderboard(current_season_day)
+    leaderboard_message = f"Current Season results day {current_season_day}/28:\n"
+    for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
+        leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
+    await ctx.send(leaderboard_message)
+    return
+         
 def get_all_users():
     query = database.execute('SELECT Username FROM Users').fetchall()
     return query
@@ -385,7 +399,6 @@ def calculate_average_connections_guesses(username_to_check, days):
     scores = []
     for row in scores_db:
         scores.append(row[0])
- 
     total_score = sum(scores) 
     try:
         averege_score = total_score / len(scores)
@@ -393,6 +406,24 @@ def calculate_average_connections_guesses(username_to_check, days):
         averege_score = 0
     return averege_score
 
+# increment season day
+def increment_season_day():
+    global current_season_day 
+    if current_season_day >= SEASON_DURATON:
+        #print results!
+        current_season_day = 0
+    current_season_day += 1
 
-# Start the bot
-bot.run(BOT_ID)
+async def date_checker():
+    global current_season_day
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(30) 
+
+schedule.every().day.at("23:59").do(increment_season_day)
+
+async def main():
+    await asyncio.gather(bot.start(BOT_ID), date_checker())
+
+if __name__ == "__main__":
+    asyncio.run(main())
