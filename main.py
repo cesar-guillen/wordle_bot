@@ -1,11 +1,11 @@
 import discord
+from discord.ext import tasks
 import re
 import sqlite3
 import math 
 import time
-from datetime import datetime, timedelta
+from datetime import time, datetime, timedelta
 import csv 
-import schedule
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,10 +21,23 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 
 #CHANNEL_ID = 944387424426029056
 CHANNEL_ID = 1303707032842403854
+
 WORDLE_0 = "19/6/2021"
 CONNECTIONS_0 = "11/6/2023"
+
+def day_difference(first_date, second_date):
+    day_difference = (first_date - second_date).days
+    return day_difference
+
+def calculate_season_day(today, season_start_date): 
+    return (day_difference(today,season_start_date) % SEASON_DURATON) + 1
+    
 SEASON_DURATON = 28
-current_season_day = 27
+SEASON_START_DATE = "28/10/2024"
+season_start_date = datetime.strptime(SEASON_START_DATE, "%d/%m/%Y")
+today = datetime.today()
+current_season_day = calculate_season_day(today, season_start_date)
+new_day = time(hour=23, minute=0) # this uses UTC time 
 
 #database
 database = sqlite3.connect('bot_db')
@@ -56,7 +69,36 @@ database.execute('''
     )
 ''')
 
+database.execute('''
+    CREATE TABLE IF NOT EXISTS SeasonResults (
+        SeasonScoreID INTEGER PRIMARY KEY AUTOINCREMENT,
+        UserID INTEGER,
+        Season INTEGER,
+        Position INTEGER,
+        FOREIGN KEY(UserID) REFERENCES Users(UserID)
+    )
+    ''')
+
 database.commit()
+
+@tasks.loop(time=new_day) 
+async def update_season():
+    global current_season_day
+    current_season_day += 1
+    if current_season_day > SEASON_DURATON:
+        current_season_day = 1
+        channel = bot.get_channel(CHANNEL_ID)
+        overall_leaderboard_list = get_all_leaderboard(SEASON_DURATON)
+        leaderboard_message = "End season results:\n"
+        for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
+            leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
+        await channel.send(leaderboard_message)
+        put_season_results(overall_leaderboard_list)
+
+@bot.event
+async def on_ready():
+    if not update_season.is_running():
+        update_season.start()
 
 @bot.event
 async def on_message(message):
@@ -364,9 +406,19 @@ def put_wordle(username, wordle_id, correct):
                    (username, wordle_id, correct))
     database.commit()
     
-def day_difference(first_date, second_date):
-    day_difference = (first_date - second_date).days
-    return day_difference
+def put_season_results(rank_list):
+    global season_start_date
+    today = datetime.today()
+    season = int(math.ceil(day_difference(today, season_start_date) / 7) / 4)
+    users = []
+    rank = []
+    for idx, (user, score) in enumerate(rank_list, 1):
+        users.append(user)
+        rank.append(idx)
+    for i in range(len(users)):
+        database.execute('INSERT INTO SeasonResults (UserID, Season, Position) VALUES (?,?,?)',
+                         (users[i],season,rank[i]))
+        database.commit()
 
 def calculate_start_id(days):
     WORDLE_0 = "19/6/2021"
@@ -406,24 +458,5 @@ def calculate_average_connections_guesses(username_to_check, days):
         averege_score = 0
     return averege_score
 
-# increment season day
-def increment_season_day():
-    global current_season_day 
-    if current_season_day >= SEASON_DURATON:
-        #print results!
-        current_season_day = 0
-    current_season_day += 1
+bot.run(BOT_ID)
 
-async def date_checker():
-    global current_season_day
-    while True:
-        schedule.run_pending()
-        await asyncio.sleep(30) 
-
-schedule.every().day.at("23:59").do(increment_season_day)
-
-async def main():
-    await asyncio.gather(bot.start(BOT_ID), date_checker())
-
-if __name__ == "__main__":
-    asyncio.run(main())
