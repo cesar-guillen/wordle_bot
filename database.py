@@ -1,7 +1,8 @@
 import sqlite3
 import math
 from datetime import datetime
-from utils import *
+from day_functions import *
+
 #database
 database = sqlite3.connect('bot_db')
 cursor = database.cursor
@@ -67,7 +68,7 @@ def put_wordle(username, wordle_id, correct):
 def put_season_results(rank_list):
     global season_start_date
     today = datetime.today()
-    season = int(math.ceil(day_difference(today, season_start_date) / 7) / 4)
+    season = int(math.ceil(day_difference(today_cet, season_start_date_cet) / 7) / 4)
     users = []
     rank = []
     for idx, (user, score) in enumerate(rank_list, 1):
