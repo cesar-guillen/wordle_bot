@@ -68,9 +68,7 @@ def get_connections_leaderboard(days):
 
 def get_all_leaderboard(days):
     connections_leaderboard_list = get_connections_leaderboard(days)
-    print(connections_leaderboard_list)
     wordle_leaderboard_list = get_wordle_leaderboard(days)
-    print(wordle_leaderboard_list)
     overall_leaderboard_list = []
     for i, w_user in enumerate(wordle_leaderboard_list):
         if w_user[1] == 0.0:
@@ -120,4 +118,5 @@ def calculate_average_connections_guesses(username_to_check, days):
         averege_score = total_score / len(scores)
     except:
         averege_score = 0
+    print(averege_score)
     return averege_score
