@@ -21,5 +21,3 @@ today_cet = today.astimezone(cet)
 season_start_date_cet = cet.localize(season_start_date)
 current_season_day = calculate_season_day(today_cet, season_start_date_cet)
 new_day = time(hour=23, minute=0)  #this uses utc time 
-print(today_cet)
-print(current_season_day)
