@@ -13,14 +13,14 @@ import matplotlib.animation as animation
 import asyncio 
 from bot_id import BOT_ID
 from discord.ext import commands
-
+import pytz
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-#CHANNEL_ID = 944387424426029056
-CHANNEL_ID = 1303707032842403854
+CHANNEL_ID = 944387424426029056
+#CHANNEL_ID = 1303707032842403854
 
 WORDLE_0 = "19/6/2021"
 CONNECTIONS_0 = "11/6/2023"
@@ -35,8 +35,12 @@ def calculate_season_day(today, season_start_date):
 SEASON_DURATON = 28
 SEASON_START_DATE = "28/10/2024"
 season_start_date = datetime.strptime(SEASON_START_DATE, "%d/%m/%Y")
-today = datetime.today()
-current_season_day = calculate_season_day(today, season_start_date)
+today = datetime.now(pytz.utc)
+cet = pytz.timezone("Europe/Berlin")
+today_cet = today.astimezone(cet)
+season_start_date_cet = cet.localize(season_start_date)
+current_season_day = calculate_season_day(today_cet, season_start_date_cet)
+print(current_season_day)
 new_day = time(hour=23, minute=0) # this uses UTC time 
 
 #database
@@ -149,8 +153,8 @@ async def stats(ctx):
     cursor = database.execute('SELECT Username FROM Users WHERE Username = ?', (username_to_check,))
     result = cursor.fetchone()  
     if result: 
-        wordle_average = calculate_average_wordle_guesses(username_to_check)
-        connections_average = calculate_average_connections_guesses(username_to_check)
+        wordle_average = calculate_average_wordle_guesses(username_to_check, 2000)
+        connections_average = calculate_average_connections_guesses(username_to_check,2000)
         wordle_distribution = calculate_wordle_distribution(username_to_check)
         connections_distribution = calculate_connections_distribution(username_to_check)
         await ctx.send(f"## Average in Worlde: {wordle_average:.2f}\n{wordle_distribution}\n## Average correct Connections: {connections_average:.2f}\n{connections_distribution}") 
@@ -218,7 +222,7 @@ async def rank(ctx):
 @bot.command()
 async def season(ctx):
     global current_season_day
-    overall_leaderboard_list = get_all_leaderboard(current_season_day)
+    overall_leaderboard_list = get_all_leaderboard(current_season_day-1)
     leaderboard_message = f"Current Season results day {current_season_day}/28:\n"
     for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
         leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
@@ -383,6 +387,11 @@ def get_all_leaderboard(days):
     connections_leaderboard_list = get_connections_leaderboard(days)
     wordle_leaderboard_list = get_wordle_leaderboard(days)
     overall_leaderboard_list = []
+    for i, w_user in enumerate(wordle_leaderboard_list):
+        if w_user[1] == 0.0:
+            w_user = list(w_user)  # Convert tuple to list
+            w_user[1] = 7          # Modify the value
+            wordle_leaderboard_list[i] = tuple(w_user) 
     for c_user in connections_leaderboard_list:
         for w_user in wordle_leaderboard_list:
             if c_user[0] == w_user[0]:
