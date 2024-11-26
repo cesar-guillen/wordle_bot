@@ -84,11 +84,11 @@ def get_all_leaderboard(days):
 
 def calculate_start_id(days):
     global today_cet
-    WORDLE_0 = "19/6/2021"
     start_date_w = datetime.strptime(WORDLE_0, "%d/%m/%Y")
     start_date_c = datetime.strptime(CONNECTIONS_0, "%d/%m/%Y")
-    start_id_w = day_difference(today_cet.day, start_date_w) - days
-    start_id_c = day_difference(today_cet.day, start_date_c) - days
+    today_date = datetime(today_cet.year, today_cet.month, today_cet.day)
+    start_id_w = day_difference(today_date, start_date_w) - days
+    start_id_c = day_difference(today_date, start_date_c) - days
     return [start_id_w, start_id_c]
 
 def calculate_average_wordle_guesses(username_to_check, days):
