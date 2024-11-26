@@ -147,9 +147,7 @@ async def rank(ctx):
 @bot.command()
 async def season(ctx):
     global current_season_day
-    print(current_season_day)
     overall_leaderboard_list = get_all_leaderboard(current_season_day)
-    print(overall_leaderboard_list)
     leaderboard_message = f"Current Season results day {current_season_day}/28:\n"
     for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
         leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"
