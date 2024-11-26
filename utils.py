@@ -118,5 +118,4 @@ def calculate_average_connections_guesses(username_to_check, days):
         averege_score = total_score / len(scores)
     except:
         averege_score = 0
-    print(averege_score)
     return averege_score
