@@ -104,7 +104,7 @@ def calculate_average_wordle_guesses(username_to_check, days):
         average_guesses = total_guesses / len(guesses)
     except:
         average_guesses = 0
-
+    print(average_guesses)
     return average_guesses
 
 def calculate_average_connections_guesses(username_to_check, days):
