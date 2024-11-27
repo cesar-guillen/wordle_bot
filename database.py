@@ -67,7 +67,7 @@ def put_wordle(username, wordle_id, correct):
     
 def put_season_results(rank_list):
     global season_start_date
-    today = datetime.today()
+    today_cet = find_cet_day()
     season = int(math.ceil(day_difference(today_cet, season_start_date_cet) / 7) / 4)
     users = []
     rank = []
