@@ -3,8 +3,8 @@ from datetime import datetime
 from day_functions import *
 import math 
 
-#CHANNEL_ID = 944387424426029056
-CHANNEL_ID = 1303707032842403854
+CHANNEL_ID = 944387424426029056
+#CHANNEL_ID = 1303707032842403854
 
 def calculate_connections_distribution(username_to_check):
     distribution = []
@@ -16,7 +16,7 @@ def calculate_connections_distribution(username_to_check):
         query = database.execute('SELECT COUNT(*) FROM ConnectionsScores WHERE Score = ? AND UserID = ?', (i, username_to_check))
         count = query.fetchone()[0]
         percentage = (count / total_count) * 100
-        num_dashes = math.ceil((count / total_count) * 40)
+        num_dashes = math.ceil((count / total_count) * 40) #calculate how many dashes we need for each %
         if num_dashes == 0:
             num_dashes = 1
         distribution_line = f'{i} ' + '-' * num_dashes + f'> {percentage:.2f}%'
@@ -38,8 +38,8 @@ def calculate_wordle_distribution(username_to_check):
         num_dashes = math.ceil((count / total_count) * 50)
         if num_dashes == 0:
             num_dashes = 1
-        if i == 6:
-            score_to_check = 'X/6'
+        if i + 1 == 7:
+            score_to_check = 'X/6' #put x/6 instead of 7/6
         distribution_line = f'{score_to_check} ' + '-' * num_dashes + f'> {percentage:.2f}%'
         distribution.append(distribution_line)
 
@@ -83,11 +83,11 @@ def get_all_leaderboard(days):
     return overall_leaderboard_list
 
 def calculate_start_id(days):
-    global today_cet
+    today_cet = find_cet_day()
     start_date_w = datetime.strptime(WORDLE_0, "%d/%m/%Y")
     start_date_c = datetime.strptime(CONNECTIONS_0, "%d/%m/%Y")
     today_date = datetime(today_cet.year, today_cet.month, today_cet.day)
-    start_id_w = day_difference(today_date, start_date_w) - days
+    start_id_w = day_difference(today_date, start_date_w) - days #get the id we need to start searching for eg day = 2, currentdayid - 2
     start_id_c = day_difference(today_date, start_date_c) - days
     return [start_id_w, start_id_c]
 
@@ -104,7 +104,6 @@ def calculate_average_wordle_guesses(username_to_check, days):
         average_guesses = total_guesses / len(guesses)
     except:
         average_guesses = 0
-    print(average_guesses)
     return average_guesses
 
 def calculate_average_connections_guesses(username_to_check, days):
