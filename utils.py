@@ -3,8 +3,9 @@ from datetime import datetime
 from day_functions import *
 import math 
 
-CHANNEL_ID = 944387424426029056
-#CHANNEL_ID = 1303707032842403854
+#choose were to display, test server or actual server
+CHANNEL_ID = 944387424426029056 #weeb
+#CHANNEL_ID = 1303707032842403854 #test server
 
 def calculate_connections_distribution(username_to_check):
     distribution = []
