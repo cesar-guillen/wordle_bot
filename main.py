@@ -13,11 +13,10 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 @tasks.loop(time=new_day) 
 async def update_season():
     global current_season_day
-    current_season_day += 1
     if current_season_day > SEASON_DURATON:
         current_season_day = 1
         channel = bot.get_channel(CHANNEL_ID)
-        overall_leaderboard_list = get_all_leaderboard(SEASON_DURATON)
+        overall_leaderboard_list = get_all_leaderboard(SEASON_DURATON + 1)#account that this happens at 00:00 so a new day should be added
         leaderboard_message = "End season results:\n"
         for idx, (user, score) in enumerate(overall_leaderboard_list, 1):
             leaderboard_message += f"{idx}. {user}: {round(score, 2)}\n"

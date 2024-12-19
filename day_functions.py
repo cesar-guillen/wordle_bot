@@ -2,7 +2,7 @@ import time
 import pytz
 from datetime import time, datetime
 SEASON_DURATON = 28
-SEASON_START_DATE = "28/10/2024"
+SEASON_START_DATE = "28/10/2024" #day were we started doing sesasons used for knowing current season day
 WORDLE_0 = "19/6/2021"
 CONNECTIONS_0 = "11/6/2023"
 
@@ -24,5 +24,5 @@ def find_cet_day():
 
 today_cet = find_cet_day() # server is in utc timezone, changing it to CET
 season_start_date_cet = cet.localize(season_start_date)
-current_season_day = calculate_season_day(today_cet, season_start_date_cet)
+current_season_day = calculate_season_day(today_cet, season_start_date_cet) # get calculated at run time but gets updated in the disc loop
 
