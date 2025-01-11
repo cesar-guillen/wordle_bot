@@ -13,7 +13,7 @@ def day_difference(first_date, second_date):
 def calculate_season_day(today, season_start_date): 
     return (day_difference(today,season_start_date) % SEASON_DURATON) + 1
 
-new_day = time(hour=23, minute=0)  #this uses utc times
+new_day = time(hour=23, minute=00)  #this uses utc times
 season_start_date = datetime.strptime(SEASON_START_DATE, "%d/%m/%Y")
 cet = pytz.timezone("Europe/Berlin")
 
