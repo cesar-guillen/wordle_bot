@@ -39,7 +39,7 @@ async def on_message(message):
         
     if message.channel.id == CHANNEL_ID:
         message.content = message.content.replace("X", "7")
-        wordle_pattern = r"Wordle\s+([\d,]+)\s+(\d+/\d+)"
+        wordle_pattern = r"Wordle\s+([\d,.]+)\s+(\d+/\d+)"
         match_wordle = re.search(wordle_pattern, message.content)
         connections_pattern = r"Puzzle #(\d+)"
         match_connections = re.search(connections_pattern, message.content)
@@ -49,7 +49,7 @@ async def on_message(message):
 
         if match_wordle:
             add_user_if_not_exists(user)
-            worlde_puzzle_id = int(match_wordle.group(1).replace(",", ""))
+            worlde_puzzle_id = int(match_wordle.group(1).replace(",", "").replace(".", ""))
             score = match_wordle.group(2)
             put_wordle(user, worlde_puzzle_id, score)
             await message.channel.send(f"Wordle Puzzle #{worlde_puzzle_id}, Score: {score}")
