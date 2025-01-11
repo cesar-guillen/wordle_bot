@@ -13,6 +13,7 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 @tasks.loop(time=new_day) 
 async def update_season():
     global current_season_day
+    current_season_day += 1
     if current_season_day > SEASON_DURATON:
         current_season_day = 1
         channel = bot.get_channel(CHANNEL_ID)
