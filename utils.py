@@ -93,19 +93,31 @@ def calculate_start_id(days):
     return [start_id_w, start_id_c]
 
 def calculate_average_wordle_guesses(username_to_check, days):
-    query = database.execute('SELECT Guesses FROM WordleScores WHERE UserID = ? AND WordleID > ?', (username_to_check,calculate_start_id(days)[0]))
+    query = database.execute(
+        'SELECT Guesses FROM WordleScores WHERE UserID = ? AND WordleID > ?',
+        (username_to_check, calculate_start_id(days)[0])
+    )
     guesses_db = query.fetchall() 
     guesses = []
+
     for row in guesses_db:
-        guess_str = row[0]
-        guess = int(guess_str.split('/')[0])
+        guess_val = row[0]
+        if isinstance(guess_val, str):
+            try:
+                guess = int(guess_val.split('/')[0])
+            except:
+                continue
+        elif isinstance(guess_val, (int, float)):
+            guess = guess_val
+        else:
+            continue
         guesses.append(guess)
-    total_guesses = sum(guesses) 
-    try:
-        average_guesses = total_guesses / len(guesses)
-    except:
-        average_guesses = 0
+
+    total_guesses = sum(guesses)
+    average_guesses = total_guesses / len(guesses) if guesses else 0
+
     return average_guesses
+
 
 def calculate_average_connections_guesses(username_to_check, days):
     query = database.execute('SELECT Score FROM ConnectionsScores WHERE UserID = ? AND ConnectionsID > ?', (username_to_check,calculate_start_id(days)[1]))
@@ -119,3 +131,14 @@ def calculate_average_connections_guesses(username_to_check, days):
     except:
         averege_score = 0
     return averege_score
+
+
+def get_leaderboard_pos(user):
+    leaderboard = get_all_leaderboard(current_season_day)
+    leaderboard_sorted = sorted(leaderboard, key=lambda x: x[1], reverse=True)  # More correct groups = better
+    for idx, (username, _) in enumerate(leaderboard_sorted, 1):
+        if username == user:
+            leaderboard_pos = idx
+            break
+
+    return leaderboard_pos
