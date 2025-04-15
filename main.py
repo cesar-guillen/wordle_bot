@@ -51,8 +51,11 @@ async def on_message(message):
             add_user_if_not_exists(user)
             worlde_puzzle_id = int(match_wordle.group(1).replace(",", "").replace(".", ""))
             score = match_wordle.group(2)
-            put_wordle(user, worlde_puzzle_id, score)
-            await message.channel.send(f"Wordle Puzzle #{worlde_puzzle_id}, Score: {score}")
+            guess = int(score.split('/')[0])
+            adjusted_score = guess / ((((get_leaderboard_pos(user) - 1) * 3) + 100) / 100) 
+            score = f"{adjusted_score:.2f}/7"
+            put_wordle(user, worlde_puzzle_id, adjusted_score)
+            await message.channel.send(f"Wordle Puzzle #{worlde_puzzle_id}, Score: {adjusted_score:.2f}")
 
         elif match_connections:
             add_user_if_not_exists(user)
@@ -65,8 +68,9 @@ async def on_message(message):
                 
                 if len(set(emojis)) == 1:  
                     correct_groups += 1
-            put_connections(user, conn_puzzle_id, correct_groups)
-            await message.channel.send(f"Puzzle ID: {conn_puzzle_id}, Correct Groups: {correct_groups}")
+            adjusted_score = ((((get_leaderboard_pos(user) - 1) * 3) + 100) / 100) * correct_groups
+            put_connections(user, conn_puzzle_id, adjusted_score)
+            await message.channel.send(f"Puzzle ID: {conn_puzzle_id}, Correct Groups: {adjusted_score}")
 
         await bot.process_commands(message)
 
